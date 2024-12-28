@@ -1,5 +1,7 @@
 import re
 import random
+import os
+import datetime
 
 def extract_questions(latex_file):
     """Wyodrębnia pytania zamknięte z pliku LaTeX."""
@@ -20,14 +22,14 @@ def extract_questions(latex_file):
             choices = []
             correct_choice_indices = []
             
-            choice_matches = re.findall(r'\\(correctchoice|choice)(.*?)(\s*\\choice|$)', choice_block, re.DOTALL)
+            choice_matches = re.findall(r'\\(correctchoice|choice)\s*(.*?)(?=\s*\\(correctchoice|choice)|$)', choice_block, re.DOTALL)
             for i, choice_match in enumerate(choice_matches):
-              choice_type = choice_match[0]
-              choice_text = choice_match[1].strip()
-              choices.append(choice_text)
-              if choice_type == "correctchoice":
-                correct_choice_indices.append(i)
-            
+                choice_type = choice_match[0].strip()
+                choice_text = choice_match[1].strip()
+                choices.append(choice_text)
+                if choice_type == "correctchoice":
+                    correct_choice_indices.append(i)
+                
             
             all_questions.append({
                 'question': question_text,
@@ -77,7 +79,7 @@ def generate_random_quiz(questions, num_questions=15):
 
     return shuffled_questions
 
-def create_latex_quiz(quiz_questions, output_file="quiz.tex"):
+def create_latex_quiz(quiz_questions, output_file):
   """Tworzy dokument LaTeX z losowymi pytaniami."""
   
   latex_content = r"""\documentclass[addpoints,11pt,a4paper]{exam}
@@ -120,7 +122,12 @@ if __name__ == "__main__":
     try:
         all_questions = extract_questions(latex_file)
         quiz_questions = generate_random_quiz(all_questions)
-        create_latex_quiz(quiz_questions)
-        print("Wygenerowano losowy quiz w pliku quiz.tex")
+        
+        # Get current minute for filename
+        current_minute = datetime.datetime.now().strftime("%M")
+        output_latex_file = f"quiz_{current_minute}.tex"
+        
+        create_latex_quiz(quiz_questions, output_latex_file)
+        print(f"Wygenerowano losowy quiz w pliku {output_latex_file}")
     except ValueError as e:
         print(f"Błąd: {e}")
